@@ -69,8 +69,9 @@ else
 fi
 
 step "Packaging apps into $DIST"
-rm -rf "$DIST"
+# Remove only the bundles: Finder can recreate .DS_Store mid-delete if the folder is open.
 mkdir -p "$DIST"
+rm -rf "$DIST/Quassel Client.app" "$DIST/Quassel.app"
 for APP in "Quassel Client" "Quassel"; do
     cp -R "$BUILD/$APP.app" "$DIST/"
     FW="$DIST/$APP.app/Contents/Frameworks"
