@@ -23,6 +23,9 @@ Re-run any time to pull upstream changes and rebuild. Output lands in `dist/`:
 
 Both are self-contained (Qt is bundled), so they keep working if Homebrew is removed.
 
+The apps run only on the macOS version they were built on or newer: the bundled Homebrew
+libraries target the build machine's macOS. Building on macOS 27 means they need macOS 27.
+
 ## Install / replace an existing Quassel
 
 Drag the app into `/Applications`, replacing the matching old one (Client for Client,
