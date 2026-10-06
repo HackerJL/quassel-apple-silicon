@@ -57,6 +57,8 @@ for APP in "Quassel Client" "Quassel"; do
         install_name_tool -add_rpath @loader_path "$f" 2>/dev/null || true
     done
     "$QT/bin/macdeployqt" "$DIST/$APP.app" -always-overwrite
+    # Info.plist expects quassel.icns; upstream only generates it in the skipped bundle step.
+    iconutil -c icns -o "$DIST/$APP.app/Contents/Resources/quassel.icns" "$SRC/pics/quassel.iconset"
     codesign --force --deep -s - "$DIST/$APP.app"
 done
 
@@ -71,6 +73,10 @@ while IFS= read -r -d '' f; do
 done < <(find "$DIST" -type f \( -perm +111 -o -name '*.dylib' \) -print0)
 for APP in "Quassel Client" "Quassel"; do
     file "$DIST/$APP.app/Contents/MacOS/$APP"
+    if [ ! -s "$DIST/$APP.app/Contents/Resources/quassel.icns" ]; then
+        echo "  missing app icon in: $APP.app"
+        BAD=1
+    fi
 done
 if [ "$BAD" -ne 0 ]; then
     echo "Verification failed: bundles reference files outside the app." >&2

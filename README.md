@@ -54,4 +54,6 @@ xattr -dr com.apple.quarantine "/Applications/Quassel Client.app"
 
 CMake's built-in bundle step (`-DBUNDLE=ON`) fails in `fixup_bundle` on current macOS.
 `build.sh` instead copies the Quassel libraries into each app, fixes the rpaths, runs Qt's
-`macdeployqt`, ad-hoc signs, and then verifies nothing references Homebrew or the build tree.
+`macdeployqt`, generates the app icon from `pics/quassel.iconset` (normally done by that bundle
+step), ad-hoc signs, and then verifies nothing references Homebrew or the build tree and the
+icon is present.
