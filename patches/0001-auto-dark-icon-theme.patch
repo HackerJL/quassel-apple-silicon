@@ -1,0 +1,79 @@
+diff --git a/src/qtui/qtui.cpp b/src/qtui/qtui.cpp
+index 20f03ee..059b0df 100644
+--- a/src/qtui/qtui.cpp
++++ b/src/qtui/qtui.cpp
+@@ -286,9 +286,30 @@ void QtUi::setupIconTheme()
+     themePaths << ":/icons";
+     QIcon::setThemeSearchPaths(themePaths);
+ 
++    // Watch for the system switching between light and dark appearance
++    _darkPalette = isDarkPalette();
++    qApp->installEventFilter(this);
++
+     refreshIconTheme();
+ }
+ 
++bool QtUi::isDarkPalette() const
++{
++    return QApplication::palette().color(QPalette::Window).lightness() < 128;
++}
++
++bool QtUi::eventFilter(QObject* obj, QEvent* event)
++{
++    if (obj == qApp && event->type() == QEvent::ApplicationPaletteChange) {
++        bool dark = isDarkPalette();
++        if (dark != _darkPalette) {
++            _darkPalette = dark;
++            refreshIconTheme();
++        }
++    }
++    return GraphicalUi::eventFilter(obj, event);
++}
++
+ void QtUi::refreshIconTheme()
+ {
+     // List of available fallback themes
+@@ -313,6 +334,10 @@ void QtUi::refreshIconTheme()
+         if (availableThemes.contains(_systemIconTheme)) {
+             fallbackTheme = _systemIconTheme;
+         }
++        else if (isDarkPalette() && availableThemes.contains("breeze-dark")) {
++            // No usable system theme (e.g. on macOS), so match the light/dark appearance
++            fallbackTheme = "breeze-dark";
++        }
+         else {
+             fallbackTheme = availableThemes.first();
+         }
+diff --git a/src/qtui/qtui.h b/src/qtui/qtui.h
+index 07208a3..90b5b9a 100644
+--- a/src/qtui/qtui.h
++++ b/src/qtui/qtui.h
+@@ -88,6 +88,8 @@ public:
+      */
+     QString systemIconTheme() const;
+ 
++    bool eventFilter(QObject* obj, QEvent* event) override;
++
+ public slots:
+     void init() override;
+ 
+@@ -125,6 +127,11 @@ private:
+      */
+     void setupIconTheme();
+ 
++    /**
++     * Whether the application palette is dark, i.e. the system uses a dark appearance.
++     */
++    bool isDarkPalette() const;
++
+ private:
+     static QList<AbstractNotificationBackend*> _notificationBackends;
+     static QList<AbstractNotificationBackend::Notification> _notifications;
+@@ -132,6 +139,7 @@ private:
+     std::unique_ptr<MainWin> _mainWin;
+ 
+     QString _systemIconTheme;
++    bool _darkPalette{false};
+ 
+     std::unique_ptr<QTemporaryDir> _dummyThemeDir;
+ 

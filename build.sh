@@ -5,8 +5,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SRC="$ROOT/src"
-BUILD="$SRC/build"
-DIST="$ROOT/dist"
+# Override to build side by side without touching an existing build, e.g.
+#   DIST=dist-test BUILD=src/build-test ./build.sh
+BUILD="$(cd "$ROOT" && mkdir -p "${BUILD:-src/build}" && cd "${BUILD:-src/build}" && pwd)"
+DIST="$ROOT/${DIST:-dist}"
 QT="/opt/homebrew/opt/qt@5"
 UPSTREAM="https://github.com/quassel/quassel.git"
 
@@ -17,12 +19,21 @@ brew install cmake ninja qt@5 boost
 
 step "Fetching Quassel source"
 if [ -d "$SRC/.git" ]; then
+    # src/ is a managed upstream checkout: drop previously applied patches before updating.
+    git -C "$SRC" checkout -- .
     git -C "$SRC" pull --ff-only
 else
     git clone "$UPSTREAM" "$SRC"
 fi
 # Translations live in a submodule; the build fails without it.
 git -C "$SRC" submodule update --init --depth 1
+
+step "Applying patches"
+for P in "$ROOT"/patches/*.patch; do
+    [ -e "$P" ] || continue
+    echo "  $(basename "$P")"
+    git -C "$SRC" apply "$P"
+done
 
 step "Configuring"
 cmake -S "$SRC" -B "$BUILD" -G Ninja \

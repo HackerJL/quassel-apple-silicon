@@ -2,3 +2,4 @@ src/
 dist/
 install/
 .DS_Store
+dist-*/
