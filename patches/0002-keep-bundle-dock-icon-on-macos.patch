@@ -1,0 +1,27 @@
+--- a/src/qtui/mainwin.cpp
++++ b/src/qtui/mainwin.cpp
+@@ -175,8 +175,10 @@
+ 
+     setWindowTitle("Quassel IRC");
+     setWindowIconText("Quassel IRC");
+-    // Set the default icon for all windows
++#ifndef Q_OS_MAC
++    // Set the default icon for all windows (on macOS this would replace the bundle's Dock icon)
+     QApplication::setWindowIcon(icon::get("quassel"));
++#endif
+     updateIcon();
+ }
+ 
+--- a/src/qtui/qtui.cpp
++++ b/src/qtui/qtui.cpp
+@@ -62,7 +62,10 @@
+         QIcon::setThemeName(_systemIconTheme);
+     }
+     setupIconTheme();
++#ifndef Q_OS_MAC
++    // On macOS this would replace the bundle's Dock icon (and its dark/tinted variants)
+     QApplication::setWindowIcon(icon::get("quassel"));
++#endif
+ 
+     setUiStyle(new QtUiStyle(this));
+ }
