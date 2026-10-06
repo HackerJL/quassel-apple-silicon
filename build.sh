@@ -31,13 +31,15 @@ cmake -S "$SRC" -B "$BUILD" -G Ninja \
     -DCMAKE_OSX_ARCHITECTURES=arm64 \
     -DWANT_CORE=OFF \
     -DWITH_WEBENGINE=OFF \
+    -DBUNDLE=ON \
     -DEMBED_DATA=ON
 
 step "Compiling"
 cmake --build "$BUILD"
 
-# CMake's own bundle step (BUNDLE=ON / fixup_bundle) fails on current macOS,
-# so the apps are packaged by hand and macdeployqt pulls in Qt.
+# BUNDLE=ON makes the build produce .app bundles, but its install-time
+# fixup_bundle step fails on current macOS, so instead of `cmake --install`
+# the apps are packaged by hand and macdeployqt pulls in Qt.
 step "Packaging apps into $DIST"
 rm -rf "$DIST"
 mkdir -p "$DIST"
