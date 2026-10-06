@@ -46,6 +46,23 @@ or run:
 xattr -dr com.apple.quarantine "/Applications/Quassel Client.app"
 ```
 
+## Additions over upstream
+
+- **Dark mode toolbar icons** (`patches/0001-auto-dark-icon-theme.patch`): with the icon theme
+  set to "Automatic", Quassel uses Breeze Dark under a dark appearance and switches live.
+  `build.sh` applies everything in `patches/` to a clean checkout.
+- **macOS 26+ app icon** (`icon/Quassel.icon`): an Icon Composer icon with the ring and dot
+  as separate glass layers, so macOS can render light, dark, clear and tinted variants
+  (System Settings → Appearance → Icon & widget style). Compiling it needs full Xcode; without
+  it `build.sh` falls back to the classic flat icon. `icon/make-layers.swift` regenerates the
+  layer images.
+
+To try changes without replacing a working build, build side by side:
+
+```sh
+DIST=dist-test BUILD=src/build-test ./build.sh
+```
+
 ## What's left out
 
 - **Core binary** (`quasselcore`) — not built (`WANT_CORE=OFF`); the all-in-one app includes core functionality.

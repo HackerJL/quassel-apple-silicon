@@ -51,6 +51,23 @@ cmake --build "$BUILD"
 # BUNDLE=ON makes the build produce .app bundles, but its install-time
 # fixup_bundle step fails on current macOS, so instead of `cmake --install`
 # the apps are packaged by hand and macdeployqt pulls in Qt.
+step "Compiling app icon"
+# icon/Quassel.icon is an Icon Composer icon with separate glyph layers, so macOS
+# can render light, dark and tinted variants. Compiling it needs full Xcode;
+# without it the apps get only the classic flat icon.
+ICONCAR="$BUILD/appicon"
+rm -rf "$ICONCAR"
+mkdir -p "$ICONCAR"
+XCODE_DEV="/Applications/Xcode.app/Contents/Developer"
+if [ -d "$XCODE_DEV" ] && DEVELOPER_DIR="$XCODE_DEV" xcrun actool "$ROOT/icon/Quassel.icon" \
+        --compile "$ICONCAR" --platform macosx --minimum-deployment-target 27.0 \
+        --app-icon Quassel --output-partial-info-plist "$ICONCAR/partial.plist" >/dev/null; then
+    echo "  Icon Composer icon compiled (light/dark/tinted)"
+else
+    echo "  Xcode's actool unavailable; using the classic icon only"
+    rm -f "$ICONCAR/Assets.car"
+fi
+
 step "Packaging apps into $DIST"
 rm -rf "$DIST"
 mkdir -p "$DIST"
@@ -72,6 +89,11 @@ for APP in "Quassel Client" "Quassel"; do
     "$QT/bin/macdeployqt" "$DIST/$APP.app" -always-overwrite
     # Info.plist expects quassel.icns; upstream only generates it in the skipped bundle step.
     iconutil -c icns -o "$DIST/$APP.app/Contents/Resources/quassel.icns" "$SRC/pics/quassel.iconset"
+    if [ -f "$ICONCAR/Assets.car" ]; then
+        # CFBundleIconName (asset catalog) takes precedence over CFBundleIconFile on current macOS
+        cp "$ICONCAR/Assets.car" "$DIST/$APP.app/Contents/Resources/"
+        plutil -replace CFBundleIconName -string Quassel "$DIST/$APP.app/Contents/Info.plist"
+    fi
     codesign --force --deep -s - "$DIST/$APP.app"
 done
 
