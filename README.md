@@ -12,7 +12,7 @@ builds that need Rosetta; upstream development continues but there are no new Ma
 > written by [Claude Code](https://claude.com/claude-code), Anthropic's AI coding assistant,
 > working under the direction of the repo owner. See [How this was made](#how-this-was-made).
 
-This repo holds only the build recipe, two small patches and an app icon. Quassel itself is
+This repo holds only the build recipe, three small patches and an app icon. Quassel itself is
 written by the Quassel team; its source is cloned into `src/` at build time (not committed).
 
 ## Download
@@ -71,7 +71,7 @@ Re-run any time to pull upstream changes and rebuild. Output lands in `dist/`. B
 self-contained (Qt is bundled), so they keep working if Homebrew is removed.
 
 The apps run on macOS 26 and newer. Homebrew's bottles target only the newest macOS, so
-`build.sh` rebuilds the bundled libraries that would need more (glib, pcre2, libpng, md4c)
+`build.sh` rebuilds the bundled libraries that would need more (glib, pcre2, libpng, md4c, SQLite)
 from the same sources with a macOS 26 deployment target, and fails if anything in the
 bundles still needs a newer macOS. Set `MACOS_MIN` to change the target, e.g.
 `MACOS_MIN=27.0 ./build.sh`.
@@ -91,6 +91,9 @@ DIST=dist-test BUILD=src/build-test ./build.sh
 - **Keep the Dock icon** (`patches/0002-keep-bundle-dock-icon-on-macos.patch`): upstream
   replaces the Dock icon with the classic flat icon at startup; on macOS this patch leaves the
   app bundle's icon in place.
+- **Native menu bar icon** (`patches/0003-template-tray-icon-on-macos.patch`): the menu bar
+  icon is a template image, so macOS draws it in the menu bar's own colors like other status
+  items, dimmed when disconnected. The new-message icon stays red.
 - **macOS 26+ app icon** (`icon/Quassel.icon`): an Icon Composer icon with the ring and dot
   as separate glass layers, so macOS can render light, dark, clear and tinted variants
   (System Settings → Appearance → Icon & widget style). Compiling it needs full Xcode; without
