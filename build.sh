@@ -75,6 +75,17 @@ if fetch_source md4c; then
         && cmake --build build && cmake --install build) >/dev/null
     touch "$STAMP"
 fi
+# The monolithic Quassel.app bundles SQLite for its built-in core. Same compile options as Homebrew.
+if fetch_source sqlite; then
+    (cd "$DEPS/src/sqlite" && CPPFLAGS="-DSQLITE_ENABLE_API_ARMOR=1 -DSQLITE_ENABLE_COLUMN_METADATA=1 \
+            -DSQLITE_ENABLE_DBSTAT_VTAB=1 -DSQLITE_ENABLE_FTS3=1 -DSQLITE_ENABLE_FTS3_PARENTHESIS=1 \
+            -DSQLITE_ENABLE_FTS5=1 -DSQLITE_ENABLE_GEOPOLY=1 -DSQLITE_ENABLE_JSON1=1 \
+            -DSQLITE_ENABLE_MEMORY_MANAGEMENT=1 -DSQLITE_ENABLE_RTREE=1 -DSQLITE_ENABLE_STAT4=1 \
+            -DSQLITE_ENABLE_UNLOCK_NOTIFY=1 -DSQLITE_MAX_VARIABLE_NUMBER=250000 -DSQLITE_USE_URI=1" \
+        ./configure --prefix="$DEPS" --disable-static --disable-readline --enable-session \
+        && make && make install) >/dev/null
+    touch "$STAMP"
+fi
 # glib uses the pcre2 above and Homebrew's libintl, which already targets an old enough macOS.
 if fetch_source glib; then
     (cd "$DEPS/src/glib" && PKG_CONFIG_PATH="$DEPS/lib/pkgconfig" \
