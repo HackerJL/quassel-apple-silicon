@@ -1,0 +1,46 @@
+diff --git a/src/qtui/legacysystemtray.cpp b/src/qtui/legacysystemtray.cpp
+index 43d5496..4cb000b 100644
+--- a/src/qtui/legacysystemtray.cpp
++++ b/src/qtui/legacysystemtray.cpp
+@@ -22,6 +22,10 @@
+ 
+ #    include "legacysystemtray.h"
+ 
++#    ifdef Q_OS_MAC
++#        include <QPainter>
++#    endif
++
+ #    include "icon.h"
+ #    include "mainwin.h"
+ #    include "qtui.h"
+@@ -75,7 +79,29 @@ void LegacySystemTray::onModeChanged(Mode mode)
+ void LegacySystemTray::updateIcon()
+ {
+     QString iconName = (state() == NeedsAttention) ? currentAttentionIconName() : currentIconName();
+-    _trayIcon->setIcon(icon::get(iconName, QString{":/icons/hicolor/24x24/status/%1.svg"}.arg(iconName)));
++    QIcon trayIcon = icon::get(iconName, QString{":/icons/hicolor/24x24/status/%1.svg"}.arg(iconName));
++#    ifdef Q_OS_MAC
++    // Use a template image so macOS draws the icon in the menu bar's own colors, like other
++    // status items. Only the attention icon keeps its color, so new messages still stand out.
++    if (!iconName.startsWith("message-")) {
++        if (state() == Passive) {
++            // Template images only use alpha, so show the disconnected state dimmed
++            QIcon dimmed;
++            for (int size : {16, 18, 22, 32, 36, 44, 64}) {
++                QPixmap pixmap(size, size);
++                pixmap.fill(Qt::transparent);
++                QPainter painter(&pixmap);
++                painter.setOpacity(0.5);
++                painter.drawPixmap(0, 0, trayIcon.pixmap(size, size));
++                painter.end();
++                dimmed.addPixmap(pixmap);
++            }
++            trayIcon = dimmed;
++        }
++        trayIcon.setIsMask(true);
++    }
++#    endif
++    _trayIcon->setIcon(trayIcon);
+ }
+ 
+ void LegacySystemTray::updateToolTip()
